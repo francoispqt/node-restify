@@ -13,6 +13,7 @@ var errors = require('restify-errors');
 var filed = require('filed');
 var restifyClients = require('restify-clients');
 var uuid = require('uuid');
+var portfinder = require('portfinder');
 
 var RestError = errors.RestError;
 var restify = require('../lib');
@@ -119,11 +120,14 @@ if (IS_IPV6_SUPPORT) {
         t.equal(SERVER.url, 'http://127.0.0.1:' + PORT, 'ipv4 url');
 
         var server = restify.createServer();
-        server.listen(PORT + 1, '::1', function() {
-            t.equal(server.url, 'http://[::1]:' + (PORT + 1), 'ipv6 url');
+        portfinder.getPort(function(err, port) {
+            t.ifError(err);
+            server.listen(port, '::1', function() {
+                t.equal(server.url, 'http://[::1]:' + port, 'ipv6 url');
 
-            server.close(function() {
-                t.end();
+                server.close(function() {
+                    t.end();
+                });
             });
         });
     });
@@ -1388,37 +1392,40 @@ test('content-type routing vendor', function(t) {
         }
     );
 
-    SERVER.listen(8080, function() {
-        var _done = 0;
+    portfinder.getPort(function(portErr, port) {
+        assert.ifError(portErr);
+        SERVER.listen(8080, function() {
+            var _done = 0;
 
-        function done() {
-            if (++_done === 2) {
-                t.end();
+            function done() {
+                if (++_done === 2) {
+                    t.end();
+                }
             }
-        }
 
-        var opts = {
-            path: '/',
-            headers: {
-                'content-type': 'application/vnd.joyent.com.foo+json'
-            }
-        };
-        CLIENT.post(opts, {}, function(err, _, res) {
-            t.ifError(err);
-            t.equal(res.statusCode, 201);
-            done();
-        });
+            var opts = {
+                path: '/',
+                headers: {
+                    'content-type': 'application/vnd.joyent.com.foo+json'
+                }
+            };
+            CLIENT.post(opts, {}, function(err, _, res) {
+                t.ifError(err);
+                t.equal(res.statusCode, 201);
+                done();
+            });
 
-        var opts2 = {
-            path: '/',
-            headers: {
-                'content-type': 'application/vnd.joyent.com.bar+json'
-            }
-        };
-        CLIENT.post(opts2, {}, function(err, _, res) {
-            t.ifError(err);
-            t.equal(res.statusCode, 202);
-            done();
+            var opts2 = {
+                path: '/',
+                headers: {
+                    'content-type': 'application/vnd.joyent.com.bar+json'
+                }
+            };
+            CLIENT.post(opts2, {}, function(err, _, res) {
+                t.ifError(err);
+                t.equal(res.statusCode, 202);
+                done();
+            });
         });
     });
 });
@@ -2716,11 +2723,14 @@ test('should increment/decrement inflight request count for concurrent reqs', fu
 test("should emit 'close' on server close", function(t) {
     var server = restify.createServer();
 
-    server.listen(PORT + 1, '127.0.0.1', function() {
-        server.on('close', function() {
-            t.end();
+    portfinder.getPort(function(err, port) {
+        t.ifError(err);
+        server.listen(port, '127.0.0.1', function() {
+            server.on('close', function() {
+                t.end();
+            });
+            server.close();
         });
-        server.close();
     });
 });
 

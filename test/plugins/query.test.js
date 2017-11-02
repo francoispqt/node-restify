@@ -5,6 +5,7 @@
 var assert = require('chai').assert;
 var restify = require('../../lib/index.js');
 var restifyClients = require('restify-clients');
+var portfinder = require('portfinder');
 
 // local files
 var helper = require('../lib/helper');
@@ -225,11 +226,14 @@ describe('query parser', function() {
             res.send(req.params);
         });
 
-        SERVER.listen(8080, function() {
-            CLIENT.get('/hello/foo/?bar=baz', function(err, _, __, obj) {
-                assert.ifError(err);
-                assert.deepEqual(obj, { name: 'foo', bar: 'baz' });
-                done();
+        portfinder.getPort(function(portErr, port) {
+            assert.ifError(portErr);
+            SERVER.listen(port, function() {
+                CLIENT.get('/hello/foo/?bar=baz', function(err, _, __, obj) {
+                    assert.ifError(err);
+                    assert.deepEqual(obj, { name: 'foo', bar: 'baz' });
+                    done();
+                });
             });
         });
     });
@@ -245,11 +249,14 @@ describe('query parser', function() {
             res.send(req.params);
         });
 
-        SERVER.listen(8080, function() {
-            CLIENT.get('/?bar=baz', function(err, _, __, obj) {
-                assert.ifError(err);
-                assert.deepEqual(obj, { bar: 'baz' });
-                done();
+        portfinder.getPort(function(portErr, port) {
+            assert.ifError(portErr);
+            SERVER.listen(port, function() {
+                CLIENT.get('/?bar=baz', function(err, _, __, obj) {
+                    assert.ifError(err);
+                    assert.deepEqual(obj, { bar: 'baz' });
+                    done();
+                });
             });
         });
     });
