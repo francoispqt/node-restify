@@ -8,11 +8,13 @@
 /* eslint-disable func-names */
 
 var domain = require('domain');
+var execSync = require('child_process').execSync;
 
 var bunyan = require('bunyan');
 var once = require('once');
 
 var restify = require('../../lib');
+var IS_IPV6_SUPPORT = execSync('ifconfig -a | grep inet6').length > 0;
 
 ///--- Exports
 
@@ -94,5 +96,7 @@ module.exports = {
         }
 
         return dtp;
-    }
+    },
+
+    IS_IPV6_SUPPORT: IS_IPV6_SUPPORT
 };
